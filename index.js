@@ -2,5 +2,8 @@
 'use strict';
 
 module.exports = {
-  name: 'ember-simple-auth-devise-token'
+  name: 'ember-simple-auth-devise-token',
+  isDevelopingAddon: function() {
+    return true;
+  }
 };
