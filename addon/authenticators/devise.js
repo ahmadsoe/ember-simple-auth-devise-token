@@ -30,6 +30,7 @@ export default DeviseAuthenticator.extend({
 
       return this.makeRequest(data, requestOptions).then((response, status, xhr) => {
         let result = {
+          account: response,
           accessToken: xhr.getResponseHeader('access-token'),
           expiry: xhr.getResponseHeader('expiry'),
           tokenType: xhr.getResponseHeader('token-type'),
