@@ -30,7 +30,7 @@ export default DeviseAuthenticator.extend({
             };
 
             if (this._validate(data)) {
-              run(null, resolve, result);
+              run(null, resolve, data);
             } else {
               run(null, reject, 'Check that server response header includes data token and valid.');
             }
