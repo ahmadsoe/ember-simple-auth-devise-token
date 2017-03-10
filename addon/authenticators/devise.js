@@ -9,17 +9,6 @@ export default DeviseAuthenticator.extend({
 
   identificationAttributeName: 'email',
 
-  restore(data) {
-    let now = (new Date()).getTime();
-
-    if (!isEmpty(data.accessToken) && !isEmpty(data.expiry) && (data.expiry * 1000 > now) &&
-        !isEmpty(data.tokenType) && !isEmpty(data.uid) && !isEmpty(data.client)) {
-      return Promise.resolve(data);
-    } else {
-      return Promise.reject();
-    }
-  },
-
   authenticate(identification, password) {
     return new Promise((resolve, reject) => {
       let { identificationAttributeName } = getProperties(this, 'identificationAttributeName');
@@ -28,20 +17,28 @@ export default DeviseAuthenticator.extend({
 
       let requestOptions = { url: get(this, 'loginEndpoint') };
 
-      return this.makeRequest(data, requestOptions).then((response, status, xhr) => {
-        let result = {
-          account: response,
-          accessToken: xhr.getResponseHeader('access-token'),
-          expiry: xhr.getResponseHeader('expiry'),
-          tokenType: xhr.getResponseHeader('token-type'),
-          uid: xhr.getResponseHeader('uid'),
-          client: xhr.getResponseHeader('client')
-        };
+      this.makeRequest(data, requestOptions).then((response) => {
+        if (response.ok) {
+          response.json().then((json) => {
+            let data = {
+              account: json,
+              accessToken: response.headers.get('access-token'),
+              expiry: response.headers.get('expiry'),
+              tokenType: response.headers.get('token-type'),
+              uid: response.headers.get('uid'),
+              client: response.headers.get('client')
+            };
 
-        run(null, resolve, result);
-      }, (xhr) => {
-        run(null, reject, xhr.responseJSON || xhr.responseText);
-      });
+            if (this._validate(data)) {
+              run(null, resolve, result);
+            } else {
+              run(null, reject, 'Check that server response header includes data token and valid.');
+            }
+          });
+        } else {
+          response.json().then((json) => run(null, reject, json));
+        }
+      }).catch((error) => run(null, reject, error));
     });
   },
 
@@ -61,10 +58,22 @@ export default DeviseAuthenticator.extend({
         headers
       };
 
-      return this.makeRequest({}, requestOptions).then(
-        (response) => run(null, resolve, response),
-        (xhr) => run(null, reject, xhr.responseJSON || xhr.responseText)
-      );
+      this.makeRequest({}, requestOptions).then((response) => {
+        response.json().then((json) => {
+          if (response.ok) {
+            run(null, resolve, json);
+          } else {
+            run(null, reject, json);
+          }
+        });
+      }).catch((error) => run(null, reject, error));
     });
+  },
+
+  _validate(data) {
+    let now = (new Date()).getTime();
+
+    return !isEmpty(data.accessToken) && !isEmpty(data.expiry) && (data.expiry * 1000 > now) &&
+      !isEmpty(data.tokenType) && !isEmpty(data.uid) && !isEmpty(data.client);
   }
 });
