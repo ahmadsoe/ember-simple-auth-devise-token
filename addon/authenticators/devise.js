@@ -54,7 +54,7 @@ export default DeviseAuthenticator.extend({
 
       let requestOptions = {
         url: get(this, 'logoutEndpoint'),
-        type: 'DELETE',
+        method: 'DELETE',
         headers
       };
 
